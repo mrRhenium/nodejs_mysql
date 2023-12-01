@@ -55,3 +55,42 @@ export const del_info = async (req, res, next) => {
 
   //
 };
+
+export const get_user_by_email = async (email) => {
+  //
+  await db.query(
+    "SELECT email FROM users WHERE email = ?",
+    [email],
+    (err, data) => {
+      if (err) throw err;
+
+      return data;
+    }
+  );
+
+  //
+};
+
+export const get_user_by_id = async (id) => {
+  //
+  // let message = "Something went wrong",
+  //   code = 500,
+  //   data = [];
+
+  const response = await db.query("SELECT * FROM users WHERE id = ?", [id]);
+
+  // message = "No Data Found";
+  // code = 400;
+  // data = [];
+
+  // if (response.length) {
+  //   return res.json({
+  //     message: "User fetched Successfully",
+  //     code: 200,
+  //     data: response,
+  //   });
+  // }
+
+  return response;
+  //
+};

@@ -5,6 +5,10 @@ import bcrypt from "bcrypt";
 import { db } from "../../config/db.js";
 import { verifyToken } from "../middleware/auth.js";
 import { get_info, upd_info, del_info } from "../models/userModel.js";
+import {
+  updateValidation,
+  deleteValidation,
+} from "../validations/userValidation.js";
 
 const router = express.Router();
 
@@ -22,7 +26,7 @@ router.get("/", (req, res) => {
 // Register end point
 // ****************************************************
 
-router.post("/register", async (req, res) => {
+router.post("/register", updateValidation, async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
@@ -34,7 +38,6 @@ router.post("/register", async (req, res) => {
       async (err, data) => {
         if (err) console.log("ERROR" + err);
 
-        console.log(data);
         if (data.length) {
           return res.json("This email is already in use");
         }
@@ -76,8 +79,6 @@ router.post("/login", async (req, res) => {
       "SELECT name, email, password FROM users",
       async (err, data) => {
         if (err) throw err;
-
-        // console.log(data[0].name);
 
         const verifyPassword = await bcrypt.compare(password, data[0].password);
 
@@ -149,8 +150,8 @@ router.get("/profile", verifyToken, async (req, res) => {
 // ****************************************************
 router.get("/users/:id", verifyToken, get_info);
 
-router.put("/users/:id", verifyToken, upd_info);
+router.put("/users/:id", verifyToken, updateValidation, upd_info);
 
-router.delete("/users/:id", verifyToken, del_info);
+router.delete("/users/:id", verifyToken, deleteValidation, del_info);
 
 export default router;
