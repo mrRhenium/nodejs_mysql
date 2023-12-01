@@ -5,7 +5,7 @@ export const updateValidation = [
   check("id").custom(async (value, { req }) => {
     return get_user_by_id(req.params.id).then((user) => {
       // console.log(user);
-      if (user[0]) return Promise.reject("Email is already in use");
+      if (user[0]) return Promise.reject("User is not exist");
     });
   }),
   check("name")
@@ -43,7 +43,7 @@ export const updateValidation = [
 export const deleteValidation = [
   check("id").custom(async (value, { req }) => {
     return get_user_by_id(req.params.id).then((user) => {
-      if (user[0]) return Promise.reject("Email is already in use");
+      if (user[0]) return Promise.reject("User is not exist");
     });
   }),
   (req, res, next) => {

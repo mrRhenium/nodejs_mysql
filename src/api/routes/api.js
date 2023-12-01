@@ -2,13 +2,14 @@ import jwt from "jsonwebtoken";
 import express from "express";
 import bcrypt from "bcrypt";
 
-import { db } from "../../config/db.js";
-import { verifyToken } from "../middleware/auth.js";
-import { get_info, upd_info, del_info } from "../models/userModel.js";
+import { query } from "../../config/db.js";
 import {
   updateValidation,
   deleteValidation,
 } from "../validations/userValidation.js";
+
+import { verifyToken } from "../middleware/auth.js";
+import { del_user, get_user, upd_user } from "../controller/userControler.js";
 
 const router = express.Router();
 
@@ -25,44 +26,45 @@ router.get("/", (req, res) => {
 // ****************************************************
 // Register end point
 // ****************************************************
-
 router.post("/register", updateValidation, async (req, res) => {
   const { name, email, password } = req.body;
+
+  let message = "Something went wrong",
+    code = 500,
+    data = [];
 
   try {
     //
 
-    await db.query(
-      "SELECT email FROM users WHERE email = ?",
-      [email],
-      async (err, data) => {
-        if (err) console.log("ERROR" + err);
+    const user = await query("SELECT email FROM users WHERE email = ?", [
+      email,
+    ]);
+    console.log(user.length);
+    if (user.length) {
+      message = "Email is already exist";
+      code = 403;
+      data = user;
+    } else {
+      const bycrptedPassword = await bcrypt.hash(password, 8);
 
-        if (data.length) {
-          return res.json("This email is already in use");
-        }
-        // bcrypted password
-        const bycrptedPassword = await bcrypt.hash(password, 8);
+      const data = await query(
+        "INSERT INTO users(name, email, password) VALUES (?,?,?)",
+        [name, email, bycrptedPassword]
+      );
 
-        db.query(
-          "INSERT INTO users(name, email, password)  VALUES (?,?,?)",
-          [name, email, bycrptedPassword],
-          (err, data) => {
-            if (err) {
-              console.log("error" + err);
-            } else {
-              return res.json({
-                code: 200,
-                message: "User is registered succesfully",
-              });
-            }
-          }
-        );
-      }
-    );
+      message = "User is registered successfully!";
+      code = 200;
+      data = data;
+    }
   } catch (err) {
-    throw err;
+    message = err;
   }
+
+  return res.status(code).json({
+    message,
+    code,
+    data,
+  });
 
   //
 });
@@ -75,7 +77,7 @@ router.post("/login", async (req, res) => {
 
   try {
     // fetch data from database
-    await db.query(
+    await query(
       "SELECT name, email, password FROM users",
       async (err, data) => {
         if (err) throw err;
@@ -148,10 +150,10 @@ router.get("/profile", verifyToken, async (req, res) => {
 // ****************************************************
 // users end point
 // ****************************************************
-router.get("/users/:id", verifyToken, get_info);
+router.get("/users/:id", verifyToken, get_user);
 
-router.put("/users/:id", verifyToken, updateValidation, upd_info);
+router.put("/users/:id", verifyToken, updateValidation, upd_user);
 
-router.delete("/users/:id", verifyToken, deleteValidation, del_info);
+router.delete("/users/:id", verifyToken, deleteValidation, del_user);
 
 export default router;

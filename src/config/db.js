@@ -1,18 +1,21 @@
-import mysql from "mysql";
+import mysql from "mysql2/promise";
+// import dotenv from "dotenv";
+// dotenv.config();
 
-export const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "nodejs-mysql",
-});
+export const query = async (sql, params) => {
+  const options = {
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "nodejs-mysql",
+  };
 
-// connecting data with node js
-db.connect(function (err) {
-  if (err) {
-    console.error("error" + err);
-    return;
-  }
+  const connection = await mysql.createConnection(options);
+  const [result] = await connection.execute(sql, params);
+  // console.log(result);
+  connection.end();
 
-  console.log("Data is connected");
-});
+  console.log("Database is connected!");
+
+  return result;
+};
