@@ -1,4 +1,4 @@
-import { query } from "../../config/db.js";
+import { query } from "../../config/db.mjs";
 
 export const get_user_by_id = async (id) => {
   //

@@ -12,10 +12,11 @@ export const query = async (sql, params) => {
 
   const connection = await mysql.createConnection(options);
   const [result] = await connection.execute(sql, params);
-  // console.log(result);
-  connection.end();
 
-  console.log("Database is connected!");
+  console.log(`result = ${result}`);
+  // console.log("Database is connected!");
+
+  connection.end();
 
   return result;
 };

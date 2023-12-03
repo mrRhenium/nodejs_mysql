@@ -1,4 +1,4 @@
-import { get_user_by_id, upd, del } from "../models/userModel.js";
+import { get_user_by_id, upd, del } from "../models/userModel.mjs";
 
 export const get_user = async (req, res, next) => {
   try {

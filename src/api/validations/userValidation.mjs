@@ -1,5 +1,5 @@
 import { check, validationResult } from "express-validator";
-import { get_user_by_email, get_user_by_id } from "../models/userModel.js";
+import { get_user_by_email, get_user_by_id } from "../models/userModel.mjs";
 
 export const updateValidation = [
   check("id").custom(async (value, { req }) => {

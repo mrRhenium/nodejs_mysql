@@ -2,14 +2,14 @@ import jwt from "jsonwebtoken";
 import express from "express";
 import bcrypt from "bcrypt";
 
-import { query } from "../../config/db.js";
+import { query } from "../../config/db.mjs";
 import {
   updateValidation,
   deleteValidation,
-} from "../validations/userValidation.js";
+} from "../validations/userValidation.mjs";
 
-import { verifyToken } from "../middleware/auth.js";
-import { del_user, get_user, upd_user } from "../controller/userControler.js";
+import { verifyToken } from "../middleware/auth.mjs";
+import { del_user, get_user, upd_user } from "../controller/userControler.mjs";
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.get("/", (req, res) => {
 // Register end point
 // ****************************************************
 router.post("/register", updateValidation, async (req, res) => {
-  const { name, email, password } = req.body;
+  const { id, name, email, password } = req.body;
 
   let message = "Something went wrong",
     code = 500,
@@ -39,7 +39,9 @@ router.post("/register", updateValidation, async (req, res) => {
     const user = await query("SELECT email FROM users WHERE email = ?", [
       email,
     ]);
-    console.log(user.length);
+
+    // console.log(user.length);
+
     if (user.length) {
       message = "Email is already exist";
       code = 403;
@@ -48,8 +50,8 @@ router.post("/register", updateValidation, async (req, res) => {
       const bycrptedPassword = await bcrypt.hash(password, 8);
 
       const data = await query(
-        "INSERT INTO users(name, email, password) VALUES (?,?,?)",
-        [name, email, bycrptedPassword]
+        "INSERT INTO users(id, name, email, password) VALUES (?,?,?,?)",
+        [id, name, email, bycrptedPassword]
       );
 
       message = "User is registered successfully!";
@@ -74,63 +76,71 @@ router.post("/register", updateValidation, async (req, res) => {
 // ****************************************************
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  let message = "Something went wrong!",
+    code = 500,
+    data = [];
 
   try {
     // fetch data from database
-    await query(
-      "SELECT name, email, password FROM users",
-      async (err, data) => {
-        if (err) throw err;
-
-        const verifyPassword = await bcrypt.compare(password, data[0].password);
-
-        // console.log(email, data, verifyPassword);
-
-        if (email == data[0].email && verifyPassword) {
-          //
-
-          // define refresh token
-          const refreshToken = jwt.sign(
-            {
-              user: data[0].name,
-            },
-            process.env.REFRESH_TOKEN,
-            {
-              expiresIn: "30d",
-            }
-          );
-
-          // define access token
-          const accessToken = jwt.sign(
-            {
-              user: data[0].name,
-            },
-            process.env.ACCESS_TOKEN,
-            {
-              expiresIn: "1d",
-            }
-          );
-
-          return res.status(200).json({
-            code: 200,
-            refreshToken: refreshToken,
-            accessToken: accessToken,
-          });
-
-          //
-        } //
-        else {
-          return res.status(401).json({
-            code: 401,
-            message: "Bad Credentials",
-          });
-        }
-      }
+    const response = await query(
+      "SELECT name, email, password FROM users WHERE email = ?",
+      [email]
     );
+
+    message = "Bad Credentials!";
+    code = 403;
+    data = [];
+
+    if (response.length > 0) {
+      const verifyPassword = await bcrypt.compare(
+        password,
+        response[0].password
+      );
+
+      // console.log(email, data, verifyPassword);
+
+      if (email == response[0].email && verifyPassword) {
+        //
+
+        // define refresh token
+        const refreshToken = jwt.sign(
+          {
+            user: response[0].name,
+          },
+          process.env.REFRESH_TOKEN,
+          {
+            expiresIn: "30d",
+          }
+        );
+
+        // define access token
+        const accessToken = jwt.sign(
+          {
+            user: response.name,
+          },
+          process.env.ACCESS_TOKEN,
+          {
+            expiresIn: "1d",
+          }
+        );
+
+        message = "Successfully LogedIn";
+        code = 200;
+        data = {
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        };
+
+        //
+      } //
+    }
+
+    //
   } catch (err) {
     throw err;
   }
 
+  return res.status(code).json({ message, code, data });
   //
 });
 
